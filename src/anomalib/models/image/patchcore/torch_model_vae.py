@@ -147,15 +147,15 @@ class PatchcoreVAEModel(PatchcoreModel):
                     optimizer.zero_grad()
                     recon, mu, logvar = self.vae(batch)
                     recon_loss = F.mse_loss(recon, batch)
-                    # KL divergence: -0.02 * mean(1 + log σ² - μ² - σ²)
-                    kl_loss = -0.02 * torch.mean(1 + logvar - mu.pow(2) - logvar.exp())
+                    # KL divergence: -0.5 * mean(1 + log σ² - μ² - σ²)
+                    kl_loss = -0.5 * torch.mean(1 + logvar - mu.pow(2) - logvar.exp())
                     loss = recon_loss + kl_loss
                     loss.backward()
                     optimizer.step()
                     epoch_loss += loss.item()
                 if (epoch + 1) % 10 == 0:
                     n_batches = max(len(loader), 1)
-                    print(f"[PatchcoreVAE] epoch {epoch + 1}/{self.vae_epochs}  loss={epoch_loss / n_batches:.4f}")
+                    print(f"[PatchcoreVAE0.5] epoch {epoch + 1}/{self.vae_epochs}  loss={epoch_loss / n_batches:.4f}")
 
     # ------------------------------------------------------------------
     # Memory-bank construction  (overrides parent's subsample_embedding)
@@ -198,6 +198,10 @@ class PatchcoreVAEModel(PatchcoreModel):
         self.vae.eval()
         with torch.no_grad():
             mu, _ = self.vae.encode(all_embeddings)
+
+        # 可視化用に VAE 適用前の生特徴量を保持（メモリバンク構築後に参照可能）
+        self.viz_raw_embeddings: torch.Tensor = all_embeddings.cpu()
+        self.viz_mu_all: torch.Tensor = mu.cpu()
 
         self.memory_bank = mu
         sampler = KCenterGreedy(embedding=self.memory_bank, sampling_ratio=sampling_ratio)
