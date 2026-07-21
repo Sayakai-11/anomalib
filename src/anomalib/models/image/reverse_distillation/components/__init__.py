@@ -25,5 +25,6 @@ See Also:
 """
 
 from .bottleneck import get_bottleneck_layer
+from .residual_collection import ResidualCollectionMixin
 
-__all__ = ["get_bottleneck_layer"]
+__all__ = ["ResidualCollectionMixin", "get_bottleneck_layer"]
